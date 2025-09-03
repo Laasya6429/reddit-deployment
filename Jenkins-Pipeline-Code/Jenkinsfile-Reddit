@@ -1,3 +1,9 @@
+properties([
+    parameters([
+        string(defaultValue: 'yourregistry.azurecr.io', description: 'Azure Container Registry login server (e.g., myacr.azurecr.io)', name: 'ACR_LOGIN_SERVER')
+    ])
+])
+
 pipeline{
     agent any
     tools{
@@ -49,23 +55,40 @@ pipeline{
                 sh "trivy fs . > trivyfs.txt"
             }
         }
-        stage("Docker Build & Push"){
+        stage("Docker Build & Push to Azure Container Registry"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       sh "docker build -t reddit ."
-                       sh "docker tag reddit sreedhar8897/reddit:${BUILD_NUMBER} "
-                       sh "docker push sreedhar8897/reddit:${BUILD_NUMBER} "
+                   withCredentials([
+                       usernamePassword(credentialsId: 'azure-acr-credentials', usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')
+                   ]){
+                       sh '''
+                           # Login to Azure Container Registry
+                           echo $ACR_PASSWORD | docker login ${ACR_LOGIN_SERVER} -u $ACR_USERNAME --password-stdin
+                           
+                           # Build and tag image
+                           docker build -t reddit .
+                           docker tag reddit ${ACR_LOGIN_SERVER}/reddit:${BUILD_NUMBER}
+                           
+                           # Push to Azure Container Registry
+                           docker push ${ACR_LOGIN_SERVER}/reddit:${BUILD_NUMBER}
+                        '''
                     }
                 }
             }
         }
-        stage("TRIVY"){
+        stage("TRIVY Image Scan"){
             steps{
-                sh "trivy image sreedhar8897/reddit:latest > trivy.txt"
+                withCredentials([
+                    usernamePassword(credentialsId: 'azure-acr-credentials', usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')
+                ]){
+                    sh '''
+                        echo $ACR_PASSWORD | docker login ${ACR_LOGIN_SERVER} -u $ACR_USERNAME --password-stdin
+                        trivy image ${ACR_LOGIN_SERVER}/reddit:${BUILD_NUMBER} > trivy.txt
+                    '''
+                }
             }
         }
-        stage('Update Deployment file') {
+        stage('Update Deployment file for Azure') {
             environment {
                 GIT_REPO_NAME = "Reddit-Project"
                 GIT_USER_NAME = "uniquesreedhar"
@@ -78,14 +101,23 @@ pipeline{
                             git config user.name "uniquesreedhar"
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
-                            imageTag=$(grep -oP '(?<=reddit:)[^ ]+' deployment.yml)
-                            echo $imageTag
-                            sed -i "s/reddit:${imageTag}/reddit:${BUILD_NUMBER}/" deployment.yml
+                            
+                            # Update image in deployment.yml
+                            sed -i "s|image: .*reddit:.*|image: ${ACR_LOGIN_SERVER}/reddit:${BUILD_NUMBER}|" deployment.yml
+                            
                             git add deployment.yml
-                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git commit -m "Update deployment Image to Azure Container Registry version \${BUILD_NUMBER}"
                             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                         '''
                     }
+                }
+            }
+        }
+        stage('Deploy to AKS via ArgoCD') {
+            steps {
+                script {
+                    echo "Application will be automatically deployed to AKS via ArgoCD GitOps workflow"
+                    echo "Image: ${ACR_LOGIN_SERVER}/reddit:${BUILD_NUMBER}"
                 }
             }
         }

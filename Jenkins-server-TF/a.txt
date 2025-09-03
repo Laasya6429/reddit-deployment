@@ -1,6 +1,7 @@
 You need to do the following :
-1. Create an S3 bucket
-2. Create a DyanamoDB table
-Configure them in backend.tf
-Create a Key Pair on AWS UI.
-Give those details in variables.tfvars file
+1. Create an Azure Storage Account and a Blob container for Terraform state
+2. Configure them in backend.tf (resource_group_name, storage_account_name, container_name, key)
+3. Create an Azure Service Principal (Client ID/Secret/Tenant/Subscription)
+4. Use the service principal in Jenkins credentials
+5. (Optional) Create an SSH key pair for VM access if you prefer key auth
+6. Provide Azure details in variables.tfvars file

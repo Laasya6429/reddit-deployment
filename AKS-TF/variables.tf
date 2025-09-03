@@ -1,0 +1,11 @@
+variable "resource-group-name" {}
+variable "location" {}
+variable "cluster-name" {}
+variable "dns-prefix" {}
+variable "node-count" {}
+variable "vm-size" {}
+variable "admin-username" {}
+variable "admin-password" {}
+variable "vnet-name" {}
+variable "subnet-name" {}
+variable "nsg-name" {} 

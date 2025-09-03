@@ -1,73 +1,97 @@
-resource "aws_vpc" "vpc" {
-  cidr_block = "10.0.0.0/16"
-
-  tags = {
-    Name = var.vpc-name
-  }
+# Create Resource Group
+resource "azurerm_resource_group" "rg" {
+  name     = var.resource-group-name
+  location = var.location
 }
 
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.vpc.id
-
-  tags = {
-    Name = var.igw-name
-  }
+# Create Virtual Network
+resource "azurerm_virtual_network" "vnet" {
+  name                = var.vnet-name
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "aws_subnet" "public-subnet" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = var.subnet-name
-  }
+# Create Subnet
+resource "azurerm_subnet" "subnet" {
+  name                 = var.subnet-name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
-resource "aws_route_table" "rt" {
-  vpc_id = aws_vpc.vpc.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = {
-    Name = var.rt-name
-  }
+# Create Public IP
+resource "azurerm_public_ip" "public_ip" {
+  name                = "jenkins-public-ip"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
 }
 
-resource "aws_route_table_association" "rt-association" {
-  route_table_id = aws_route_table.rt.id
-  subnet_id      = aws_subnet.public-subnet.id
-}
+# Create Network Security Group
+resource "azurerm_network_security_group" "nsg" {
+  name                = var.nsg-name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
-resource "aws_security_group" "security-group" {
-  vpc_id      = aws_vpc.vpc.id
-  description = "Allowing Jenkins, Sonarqube, SSH Access"
-
-  ingress = [
-    for port in [22, 8080, 9000] : {
-      description      = "TLS from VPC"
-      from_port        = port
-      to_port          = port
-      protocol         = "tcp"
-      ipv6_cidr_blocks = ["::/0"]
-      self             = false
-      prefix_list_ids  = []
-      security_groups  = []
-      cidr_blocks      = ["0.0.0.0/0"]
-    }
-  ]
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  security_rule {
+    name                       = "SSH"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 
-  tags = {
-    Name = var.sg-name
+  security_rule {
+    name                       = "Jenkins"
+    priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8080"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "SonarQube"
+    priority                   = 1003
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "9000"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 1004
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTPS"
+    priority                   = 1005
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 }

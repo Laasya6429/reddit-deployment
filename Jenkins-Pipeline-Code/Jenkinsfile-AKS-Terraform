@@ -13,45 +13,53 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/uniquesreedhar/Reddit-Project.git'
             }
         }
+        stage('Azure Login') {
+            steps {
+                withCredentials([string(credentialsId: 'azure-subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')]) {
+                    script {
+                        sh '''
+                            az login --service-principal \
+                                --username $AZURE_CLIENT_ID \
+                                --password $AZURE_CLIENT_SECRET \
+                                --tenant $AZURE_TENANT_ID
+                            az account set --subscription $AZURE_SUBSCRIPTION_ID
+                        '''
+                    }
+                }
+            }
+        }
         stage('Initializing Terraform') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                dir('EKS-TF') {
+                dir('AKS-TF') {
                     script {
                         sh 'terraform init'
                     }
-                }
                 }
             }
         }
         stage('Validate Terraform Code') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                dir('EKS-TF') {
+                dir('AKS-TF') {
                     script {
                         sh 'terraform validate'
                     }
-                }
                 }
             }
         }
         stage('Terraform Plan') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                dir('EKS-TF') {
+                dir('AKS-TF') {
                     script {
                         sh "terraform plan -var-file=${params.'File-Name'}"
                     }
-                }
                 }
             }
         }
         stage('Terraform Action') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') { 
                 script {
                     echo "${params.'Terraform-Action'}"
-                    dir('EKS-TF') {
+                    dir('AKS-TF') {
                         script {
                             if (params.'Terraform-Action' == 'apply') {
                                 sh "terraform apply -auto-approve -var-file=${params.'File-Name'}"
@@ -63,8 +71,22 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+        stage('Get AKS Credentials') {
+            steps {
+                dir('AKS-TF') {
+                    script {
+                        sh '''
+                            terraform output -raw aks_cluster_name > cluster_name.txt
+                            terraform output -raw resource_group_name > resource_group.txt
+                            CLUSTER_NAME=$(cat cluster_name.txt)
+                            RESOURCE_GROUP=$(cat resource_group.txt)
+                            az aks get-credentials --resource-group $RESOURCE_GROUP --name $CLUSTER_NAME --overwrite-existing
+                        '''
+                    }
                 }
             }
         }
     }
-}
+} 

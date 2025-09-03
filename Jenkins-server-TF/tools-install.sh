@@ -1,6 +1,6 @@
 #!/bin/bash
 # For Ubuntu 22.04
-# Intsalling Java
+# Installing Java
 sudo apt update -y
 sudo apt install openjdk-17-jre -y
 sudo apt install openjdk-17-jdk -y
@@ -20,7 +20,7 @@ sudo apt-get install jenkins -y
 sudo apt update
 sudo apt install docker.io -y
 sudo usermod -aG docker jenkins
-sudo usermod -aG docker ubuntu
+sudo usermod -aG docker azureuser
 sudo systemctl restart docker
 sudo chmod 777 /var/run/docker.sock
 
@@ -31,13 +31,9 @@ sudo chmod 777 /var/run/docker.sock
 #!/bin/bash
 docker run -d  --name sonar -p 9000:9000 sonarqube:lts-community
 
-
-# Installing AWS CLI
+# Installing Azure CLI
 #!/bin/bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-sudo apt install unzip -y
-unzip awscliv2.zip
-sudo ./aws/install
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 # Installing Kubectl
 #!/bin/bash
@@ -62,3 +58,11 @@ wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-k
 echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
 sudo apt update
 sudo apt install trivy -y
+
+# Start Jenkins service
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+# Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker

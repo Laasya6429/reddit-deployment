@@ -1,8 +1,9 @@
-variable "vpc-name" {}
-variable "igw-name" {}
-variable "rt-name" {}
+variable "resource-group-name" {}
+variable "location" {}
+variable "vnet-name" {}
 variable "subnet-name" {}
-variable "sg-name" {}
-variable "instance-name" {}
-variable "key-name" {}
-variable "iam-role" {}
+variable "nsg-name" {}
+variable "vm-name" {}
+variable "admin-username" {}
+variable "admin-password" {}
+variable "vm-size" {}

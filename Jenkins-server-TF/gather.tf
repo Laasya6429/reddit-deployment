@@ -1,10 +1,5 @@
-data "aws_ami" "ami" {
-  most_recent = true
+# Get current Azure subscription
+data "azurerm_subscription" "current" {}
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-
-  owners = ["099720109477"]
-}
+# Get current Azure client configuration
+data "azurerm_client_config" "current" {}

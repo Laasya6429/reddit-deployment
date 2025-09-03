@@ -19,7 +19,7 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 #Install docker
 sudo apt install docker.io -y
-sudo usermod -aG docker ubuntu
+sudo usermod -aG docker azureuser
 newgrp docker
 sudo chmod 777 /var/run/docker.sock
 docker version
@@ -44,8 +44,5 @@ curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 kubectl version --client
 
-# Install AWS CLI 
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-sudo apt-get install unzip -y
-unzip awscliv2.zip
-sudo ./aws/install
+# Install Azure CLI 
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash

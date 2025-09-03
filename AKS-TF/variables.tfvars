@@ -1,0 +1,11 @@
+resource-group-name = "Reddit-Project-RG"
+location           = "East US"
+cluster-name       = "Reddit-AKS-Cluster"
+dns-prefix         = "redditaks"
+node-count         = 2
+vm-size            = "Standard_D2s_v3"
+admin-username     = "azureuser"
+admin-password     = "Azure@123456"
+vnet-name          = "Reddit-vnet"
+subnet-name        = "Reddit-subnet"
+nsg-name           = "Reddit-nsg" 
