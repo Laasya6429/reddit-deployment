@@ -22,6 +22,7 @@ output "aks_cluster_kube_config" {
 output "aks_cluster_host" {
   description = "Host of the AKS cluster"
   value       = azurerm_kubernetes_cluster.aks.kube_config.0.host
+  sensitive   = true
 }
 
 output "aks_cluster_client_certificate" {
