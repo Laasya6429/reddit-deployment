@@ -10,12 +10,13 @@ pipeline {
     stages {
         stage('Checkout from Git') {
             steps {
-                git branch: 'main', url: 'https://github.com/uniquesreedhar/Reddit-Project.git'
+                git branch: 'main', url: 'https://github.com/Laasya6429/reddit-deployment'
             }
         }
         stage('Azure Login') {
             steps {
-                withCredentials([string(credentialsId: 'azure-subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')]) {
+                // Use Azure Service Principal credential
+                withCredentials([azureServicePrincipal('azure-sp')]) {
                     script {
                         sh '''
                             az login --service-principal \
