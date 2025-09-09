@@ -33,7 +33,15 @@ pipeline {
             steps {
                 dir('AKS-TF') {
                     script {
-                        sh 'terraform init'
+                        withCredentials([azureServicePrincipal('azure-sp')]) {
+                            sh '''
+                                export ARM_CLIENT_ID=$AZURE_CLIENT_ID
+                                export ARM_CLIENT_SECRET=$AZURE_CLIENT_SECRET
+                                export ARM_TENANT_ID=$AZURE_TENANT_ID
+                                export ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID
+                                terraform init
+                            '''
+                        }
                     }
                 }
             }
@@ -42,7 +50,15 @@ pipeline {
             steps {
                 dir('AKS-TF') {
                     script {
-                        sh 'terraform validate'
+                        withCredentials([azureServicePrincipal('azure-sp')]) {
+                            sh '''
+                                export ARM_CLIENT_ID=$AZURE_CLIENT_ID
+                                export ARM_CLIENT_SECRET=$AZURE_CLIENT_SECRET
+                                export ARM_TENANT_ID=$AZURE_TENANT_ID
+                                export ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID
+                                terraform validate
+                            '''
+                        }
                     }
                 }
             }
@@ -51,7 +67,15 @@ pipeline {
             steps {
                 dir('AKS-TF') {
                     script {
-                        sh "terraform plan -var-file=${params.'File-Name'}"
+                        withCredentials([azureServicePrincipal('azure-sp')]) {
+                            sh """
+                                export ARM_CLIENT_ID=$AZURE_CLIENT_ID
+                                export ARM_CLIENT_SECRET=$AZURE_CLIENT_SECRET
+                                export ARM_TENANT_ID=$AZURE_TENANT_ID
+                                export ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID
+                                terraform plan -var-file=${params.'File-Name'}
+                            """
+                        }
                     }
                 }
             }
@@ -63,9 +87,25 @@ pipeline {
                     dir('AKS-TF') {
                         script {
                             if (params.'Terraform-Action' == 'apply') {
-                                sh "terraform apply -auto-approve -var-file=${params.'File-Name'}"
+                                withCredentials([azureServicePrincipal('azure-sp')]) {
+                                    sh """
+                                        export ARM_CLIENT_ID=$AZURE_CLIENT_ID
+                                        export ARM_CLIENT_SECRET=$AZURE_CLIENT_SECRET
+                                        export ARM_TENANT_ID=$AZURE_TENANT_ID
+                                        export ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID
+                                        terraform apply -auto-approve -var-file=${params.'File-Name'}
+                                    """
+                                }
                             } else if (params.'Terraform-Action' == 'destroy') {
-                                sh "terraform destroy -auto-approve -var-file=${params.'File-Name'}"
+                                withCredentials([azureServicePrincipal('azure-sp')]) {
+                                    sh """
+                                        export ARM_CLIENT_ID=$AZURE_CLIENT_ID
+                                        export ARM_CLIENT_SECRET=$AZURE_CLIENT_SECRET
+                                        export ARM_TENANT_ID=$AZURE_TENANT_ID
+                                        export ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID
+                                        terraform destroy -auto-approve -var-file=${params.'File-Name'}
+                                    """
+                                }
                             } else {
                                 error "Invalid value for Terraform-Action: ${params.'Terraform-Action'}"
                             }
