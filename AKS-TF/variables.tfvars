@@ -1,5 +1,5 @@
-resource-group-name = "Reddit-Project-RG-03"
-location           = "West US 2"
+resource-group-name = "Reddit-Project-RG-04"
+location           = "East Asia"
 cluster-name       = "Reddit-AKS-Cluster-01"
 dns-prefix         = "redditaks01"
 node-count         = 2
