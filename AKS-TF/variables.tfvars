@@ -1,9 +1,9 @@
-resource-group-name = "Reddit-Project-RG-04"
-location           = "East Asia"
+resource-group-name = "Reddit-Project-RG-06"
+location           = "Malaysia West"
 cluster-name       = "Reddit-AKS-Cluster-01"
 dns-prefix         = "redditaks01"
 node-count         = 1
-vm-size            = "Standard_D2s_v3"
+vm-size            = "Standard_D2as_v5"
 admin-username     = "azureuser"
 admin-password     = "Azure@123456"
 vnet-name          = "Reddit-vnet-01"
